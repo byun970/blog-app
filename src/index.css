@@ -1,3 +1,4 @@
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -20,6 +21,7 @@ header {
   padding: 15px 40px;
   min-height: 40px;
   align-items: center;
+  margin-bottom: 10px;
 }
 
 header .header__logo {
@@ -228,4 +230,51 @@ footer a:hover {
 .profile__logout:hover,
 .profile__logout:focus {
   color: black;
+}
+
+/* carousel */
+
+.carousel__imgs img {
+  margin: 0 auto;
+  max-width: 500px;
+  height: 500px;
+}
+.slider-container {
+  width: 68%;
+  margin: 30px auto;
+  position: relative;
+  overflow: visible;
+}
+
+.slider-container .slick-prev,
+.slider-container .slick-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 999;
+  background-color: black;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: background 0.2s, color 0.2s, opacity 0.2s;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slider-container .slick-prev {
+  left: -50px; /* 슬라이더 왼쪽 바깥으로 */
+}
+.slider-container .slick-next {
+  right: -50px; /* 슬라이더 오른쪽 바깥으로 */
+}
+.slider-container .slick-prev:hover,
+.slider-container .slick-next:hover {
+  background-color: white;
+  color: black;
+  opacity: 1;
 }
