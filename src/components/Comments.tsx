@@ -1,70 +1,20 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { CommentsInterface, PostProps } from "./PostList";
+import { arrayRemove, arrayUnion, doc, updateDoc } from "firebase/firestore";
+import { db } from "firebaseApp";
+import AuthContext from "context/AuthContext";
+import { toast } from "react-toastify";
 
-const COMMENTS = [
-  {
-    id: 1,
-    email: "test1@example.com",
-    content: "첫 번째 댓글이에요.",
-    createdAt: "2025-10-01",
-  },
-  {
-    id: 2,
-    email: "user2@mail.com",
-    content: "좋은 정보 감사합니다!",
-    createdAt: "2025-10-02",
-  },
-  {
-    id: 3,
-    email: "third.user@web.net",
-    content: "정말 유용하네요 3",
-    createdAt: "2025-10-03",
-  },
-  {
-    id: 4,
-    email: "data4@test.co.kr",
-    content: "네 번째 의견 남깁니다.",
-    createdAt: "2025-10-04",
-  },
-  {
-    id: 5,
-    email: "commenter5@test.com",
-    content: "다섯 번째 댓글입니다. 👍",
-    createdAt: "2025-10-05",
-  },
-  {
-    id: 6,
-    email: "six_user@email.com",
-    content: "이거 정말 최고네요.",
-    createdAt: "2025-10-06",
-  },
-  {
-    id: 7,
-    email: "seven@site.net",
-    content: "궁금했던 내용이에요.",
-    createdAt: "2025-10-07",
-  },
-  {
-    id: 8,
-    email: "eight_tester@data.kr",
-    content: "여덟 번째 코멘트.",
-    createdAt: "2025-10-08",
-  },
-  {
-    id: 9,
-    email: "nine_comment@example.net",
-    content: "아홉 번째 사용자 의견입니다.",
-    createdAt: "2025-10-09",
-  },
-  {
-    id: 10,
-    email: "final.user@last.com",
-    content: "마지막 열 번째 댓글입니다!",
-    createdAt: "2025-10-10",
-  },
-];
+interface CommentProps {
+  post: PostProps;
+  getPost: (id: string) => Promise<void>;
+}
 
-export default function Comments() {
+export default function Comments({ post, getPost }: CommentProps) {
   const [comment, setComment] = useState("");
+  const { user } = useContext(AuthContext);
+
+  console.log(post);
 
   const onChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const {
@@ -75,9 +25,62 @@ export default function Comments() {
       setComment(value);
     }
   };
+
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      if (post && post?.id) {
+        const postRef = doc(db, "posts", post.id);
+
+        if (user?.uid) {
+          const commentObj = {
+            content: comment,
+            uid: user.uid,
+            email: user.email,
+            createdAt: new Date()?.toLocaleDateString("ko", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            }),
+          };
+          await updateDoc(postRef, {
+            comments: arrayUnion(commentObj),
+            updateDated: new Date()?.toLocaleDateString("ko", {
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
+            }),
+          });
+          // 문서 업데이트
+          await getPost(post.id);
+        }
+      }
+      toast.success("댓글을 생성했습니다.");
+      setComment("");
+    } catch (e: any) {
+      console.error(e);
+      toast.error(e?.code);
+    }
+  };
+
+  const handleDeleteComment = async (data: CommentsInterface) => {
+    const confirm = window.confirm("해당 댓글을 삭제하겠습니까");
+    if (confirm && post.id) {
+      const postRef = doc(db, "posts", post?.id);
+      await updateDoc(postRef, {
+        comments: arrayRemove(data),
+      });
+
+      toast.success("댓글을 삭제했습니다.");
+      // 문서 업데이트
+      await getPost(post.id);
+    }
+  };
+
   return (
     <div className='comments'>
-      <form className='comments__form'>
+      <form className='comments__form' onSubmit={onSubmit}>
         <div className='form__block'>
           <label htmlFor='comment'>댓글 입력</label>
           <textarea name='comment' id='comment' required value={comment} onChange={onChange} />
@@ -89,16 +92,23 @@ export default function Comments() {
       </form>
 
       <div className='comments__list'>
-        {COMMENTS?.map((comment) => (
-          <div key={comment.id} className='comment_box'>
-            <div className='comment__profile-box'>
-              <div className='comment__email'>{comment?.email}</div>
-              <div className='comment__date'>{comment?.createdAt}</div>
-              <div className='comment__delete'>삭제</div>
+        {post?.comments
+          ?.slice(0)
+          ?.reverse()
+          ?.map((comment) => (
+            <div key={comment.createdAt} className='comment_box'>
+              <div className='comment__profile-box'>
+                <div className='comment__email'>{comment?.email}</div>
+                <div className='comment__date'>{comment?.createdAt}</div>
+                {comment.uid === user?.uid && (
+                  <div className='comment__delete' onClick={() => handleDeleteComment(comment)}>
+                    삭제
+                  </div>
+                )}
+              </div>
+              <div className='comment__text'>{comment?.content}</div>
             </div>
-            <div className='comment__text'>{comment?.content}</div>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   );
