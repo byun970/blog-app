@@ -195,6 +195,11 @@ footer a:hover {
   border-radius: 20px;
 }
 
+.post__navigation .post__navigation-active
+{
+  color: #333;
+}
+
 /* post detail */
 .post__detail .post__title {
   font-size: 36px;
